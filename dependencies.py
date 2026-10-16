@@ -68,12 +68,20 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             department = profile.get("department")
             office_location = profile.get("office_location")
             employment_type = profile.get("employment_type")
-        elif user.user_metadata and isinstance(user.user_metadata, dict):
-            role = user.user_metadata.get("role", "employee")
-            full_name = user.user_metadata.get("full_name")
-            department = user.user_metadata.get("department")
-            office_location = user.user_metadata.get("office_location")
-            employment_type = user.user_metadata.get("employment_type")
+
+        meta = user.user_metadata if isinstance(user.user_metadata, dict) else {}
+        if not full_name:
+            full_name = meta.get("full_name")
+        if not department:
+            department = meta.get("department")
+        if not office_location:
+            office_location = meta.get("office_location")
+        if not employment_type:
+            employment_type = meta.get("employment_type")
+        if role == "employee" and meta.get("role"):
+            role = meta.get("role")
+        if not full_name and user.email and "@" in user.email:
+            full_name = user.email.split("@")[0]
     except HTTPException:
         raise
     except Exception:

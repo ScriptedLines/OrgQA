@@ -1230,7 +1230,7 @@
       </div>
 
       <!-- Auth Segmented Tabs -->
-      <div class="auth-tabs">
+      <div class="auth-tabs" id="authTabsContainer">
         <button type="button" class="auth-tab-btn active" id="tabSignInBtn" onclick="switchAuthTab('signin')">Sign In</button>
         <button type="button" class="auth-tab-btn" id="tabSignUpBtn" onclick="switchAuthTab('signup')">Create Account</button>
       </div>
@@ -1238,7 +1238,7 @@
       <!-- Notice Banner -->
       <div id="authNoticeBanner" style="display: none; padding: 9px 12px; border-radius: 6px; font-size: 12px; margin-bottom: 14px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);"></div>
 
-      <!-- Full-Page Sign In Form -->
+      <!-- Full-Page Sign In Form (Supabase Email & Password) -->
       <form id="signInForm" onsubmit="handleSignInSubmit(event)" style="display: flex; flex-direction: column; gap: 13px;">
         <div>
           <label for="signInEmail" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Work Email</label>
@@ -1259,45 +1259,102 @@
         </div>
       </form>
 
-      <!-- Full-Page Create Account Form -->
+      <!-- Supabase Native Sign Up Form (Email + Password) -->
       <form id="signUpForm" onsubmit="handleSignUpSubmit(event)" style="display: none; flex-direction: column; gap: 13px;">
-        <div>
-          <label for="signUpName" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Full Name</label>
-          <input type="text" id="signUpName" required placeholder="Jane Doe" autocomplete="name" class="auth-input" />
-        </div>
         <div>
           <label for="signUpEmail" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Work Email</label>
           <input type="email" id="signUpEmail" required placeholder="name@company.com" autocomplete="email" class="auth-input" />
         </div>
+        <div>
+          <label for="signUpPassword" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Password</label>
+          <input type="password" id="signUpPassword" required minlength="6" placeholder="Choose a password (min 6 characters)" autocomplete="new-password" class="auth-input" />
+        </div>
+        <div>
+          <label for="signUpPasswordConfirm" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Confirm Password</label>
+          <input type="password" id="signUpPasswordConfirm" required minlength="6" placeholder="Re-enter your password" autocomplete="new-password" class="auth-input" />
+        </div>
+        <button type="submit" class="btn-send" id="signUpSubmitBtn" style="width: 100%; justify-content: center; padding: 10px; margin-top: 4px; font-size: 13px; font-weight: 600;">
+          <span>Sign Up with Supabase</span>
+        </button>
+        <div style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 2px;">
+          Already have an account? <a href="#" onclick="switchAuthTab('signin'); return false;" style="color: var(--text-primary); font-weight: 600; text-decoration: underline;">Sign In</a>
+        </div>
+      </form>
+
+      <!-- Supabase Email Confirmation State (Step 2) -->
+      <div id="emailConfirmationView" style="display: none; flex-direction: column; gap: 16px; text-align: center; padding: 10px 0;">
+        <div style="width: 52px; height: 52px; border-radius: 12px; background: var(--bg-hover); border: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="20" height="16" x="2" y="4" rx="2"/>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+          </svg>
+        </div>
+
+        <div>
+          <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">Check your email</div>
+          <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0;">
+            We sent a confirmation link to<br/>
+            <strong id="confirmEmailTarget" style="color: var(--text-primary); font-weight: 600;">user@company.com</strong>
+          </p>
+        </div>
+
+        <div style="padding: 12px 14px; border-radius: 8px; background: var(--bg-app); border: 1px solid var(--border-subtle); font-size: 12px; color: var(--text-secondary); line-height: 1.4; text-align: left;">
+          Click the link in the email to activate your account. You will automatically be returned here to complete your profile.
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 4px;">
+          <button type="button" id="resendLinkBtn" onclick="handleResendConfirmationLink()" class="btn-ghost" style="width: 100%; justify-content: center; padding: 10px; font-size: 12px; font-weight: 500;">
+            Resend confirmation email
+          </button>
+          <button type="button" onclick="switchAuthTab('signin')" style="color: var(--text-muted); font-size: 12px; background: none; border: none; cursor: pointer; padding: 6px;">
+            Back to Sign In
+          </button>
+        </div>
+      </div>
+
+      <!-- Profile Details Form (Step 3: User Details Taking Page) -->
+      <form id="detailsForm" onsubmit="handleDetailsSubmit(event)" style="display: none; flex-direction: column; gap: 13px;">
+        <div style="text-align: center; margin-bottom: 2px;">
+          <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">Complete your profile</div>
+          <p style="font-size: 12px; color: var(--text-muted);">Provide organizational details for access control.</p>
+        </div>
+
+        <div>
+          <label for="detailsName" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Full Name</label>
+          <input type="text" id="detailsName" required placeholder="Jane Doe" autocomplete="name" class="auth-input" />
+        </div>
+
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <div>
-            <label for="signUpDept" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Department</label>
-            <select id="signUpDept" class="auth-input">
+            <label for="detailsDept" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Department</label>
+            <select id="detailsDept" class="auth-input">
               <option value="Engineering">Engineering</option>
               <option value="People & Culture">People & Culture</option>
               <option value="IT & Security">IT & Security</option>
               <option value="Finance & Operations">Finance & Ops</option>
               <option value="Legal & Compliance">Legal & Compliance</option>
+              <option value="Product & Design">Product & Design</option>
+              <option value="General">General</option>
             </select>
           </div>
           <div>
-            <label for="signUpRole" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Role Level</label>
-            <select id="signUpRole" class="auth-input">
+            <label for="detailsRole" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Role Level</label>
+            <select id="detailsRole" class="auth-input">
               <option value="employee">Employee</option>
               <option value="hr_admin">HR Administrator</option>
               <option value="it_admin">IT Administrator</option>
             </select>
           </div>
         </div>
-        <div>
-          <label for="signUpPassword" style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 5px;">Password</label>
-          <input type="password" id="signUpPassword" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password" class="auth-input" />
-        </div>
-        <button type="submit" class="btn-send" id="signUpSubmitBtn" style="width: 100%; justify-content: center; padding: 10px; margin-top: 4px; font-size: 13px; font-weight: 600;">
-          <span>Create Account</span>
+
+        <button type="submit" class="btn-send" id="detailsSubmitBtn" style="width: 100%; justify-content: center; padding: 10px; margin-top: 4px; font-size: 13px; font-weight: 600;">
+          <span>Save Profile & Enter OrgQA</span>
         </button>
-        <div style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 2px;">
-          Already have an account? <a href="#" onclick="switchAuthTab('signin'); return false;" style="color: var(--text-primary); font-weight: 600; text-decoration: underline;">Sign In</a>
+
+        <div style="text-align: center; margin-top: 6px;">
+          <button type="button" onclick="cancelDetailsView()" style="color: var(--text-muted); font-size: 12px; background: none; border: none; cursor: pointer; text-decoration: underline;">
+            Sign in with another account
+          </button>
         </div>
       </form>
     </div>
@@ -1580,6 +1637,8 @@
       }
     });
 
+    let pendingConfirmationEmail = '';
+
     // Auth Tab & Notice Management (Full Page)
     function switchAuthTab(tab) {
       document.querySelectorAll('.auth-tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -1588,7 +1647,14 @@
 
       const signInForm = document.getElementById('signInForm');
       const signUpForm = document.getElementById('signUpForm');
+      const emailConfirmView = document.getElementById('emailConfirmationView');
+      const detailsForm = document.getElementById('detailsForm');
       const subtitleEl = document.getElementById('authSubtitleEl');
+      const authTabsContainer = document.getElementById('authTabsContainer');
+
+      if (authTabsContainer) authTabsContainer.style.display = 'flex';
+      if (emailConfirmView) emailConfirmView.style.display = 'none';
+      if (detailsForm) detailsForm.style.display = 'none';
 
       if (tab === 'signin') {
         if (signInForm) signInForm.style.display = 'flex';
@@ -1601,7 +1667,7 @@
         if (signUpForm) signUpForm.style.display = 'flex';
         const btn = document.getElementById('tabSignUpBtn');
         if (btn) btn.classList.add('active');
-        if (subtitleEl) subtitleEl.innerText = 'Register for verified company policy search';
+        if (subtitleEl) subtitleEl.innerText = 'Sign up with email to receive your confirmation link';
       }
     }
 
@@ -1613,6 +1679,225 @@
       banner.style.color = isError ? '#ef4444' : '#10b981';
       banner.style.background = isError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)';
       banner.style.borderColor = isError ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)';
+    }
+
+    function showConfirmationView(email) {
+      pendingConfirmationEmail = email;
+      const targetEl = document.getElementById('confirmEmailTarget');
+      if (targetEl) targetEl.innerText = email;
+
+      const authTabs = document.getElementById('authTabsContainer');
+      if (authTabs) authTabs.style.display = 'none';
+      const signInForm = document.getElementById('signInForm');
+      if (signInForm) signInForm.style.display = 'none';
+      const signUpForm = document.getElementById('signUpForm');
+      if (signUpForm) signUpForm.style.display = 'none';
+      const detailsForm = document.getElementById('detailsForm');
+      if (detailsForm) detailsForm.style.display = 'none';
+
+      const emailView = document.getElementById('emailConfirmationView');
+      if (emailView) emailView.style.display = 'flex';
+
+      const subtitleEl = document.getElementById('authSubtitleEl');
+      if (subtitleEl) subtitleEl.innerText = 'Check your email to activate account';
+    }
+
+    async function handleResendConfirmationLink() {
+      if (!pendingConfirmationEmail) return;
+      const btn = document.getElementById('resendLinkBtn');
+      btn.disabled = true;
+      btn.innerText = 'Sending link...';
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/resend-confirmation`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: pendingConfirmationEmail, redirect_to: window.location.origin })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showAuthNotice('A fresh confirmation link has been sent to your email.', false);
+        } else {
+          showAuthNotice(data.detail || 'Could not resend email. Please wait a moment.');
+        }
+      } catch (err) {
+        showAuthNotice('Network error resending confirmation email.');
+      } finally {
+        setTimeout(() => {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerText = 'Resend confirmation email';
+          }
+        }, 5000);
+      }
+    }
+
+    let isCompletingProfile = false;
+
+    function openAuthModal() {
+      document.body.classList.remove('is-authenticated');
+      switchAuthTab('signin');
+    }
+
+    function showDetailsView(email) {
+      isCompletingProfile = true;
+      sessionStorage.setItem('orgqa_completing_profile', 'true');
+      document.body.classList.remove('is-authenticated');
+      pendingConfirmationEmail = email || pendingConfirmationEmail;
+
+      const authScreen = document.getElementById('authScreen');
+      if (authScreen) authScreen.style.display = 'flex';
+
+      const authTabs = document.getElementById('authTabsContainer');
+      if (authTabs) authTabs.style.display = 'none';
+      const signInForm = document.getElementById('signInForm');
+      if (signInForm) signInForm.style.display = 'none';
+      const signUpForm = document.getElementById('signUpForm');
+      if (signUpForm) signUpForm.style.display = 'none';
+      const emailView = document.getElementById('emailConfirmationView');
+      if (emailView) emailView.style.display = 'none';
+
+      const detailsForm = document.getElementById('detailsForm');
+      if (detailsForm) detailsForm.style.display = 'flex';
+
+      const subtitleEl = document.getElementById('authSubtitleEl');
+      if (subtitleEl) subtitleEl.innerText = 'Complete your profile details';
+
+      const nameInput = document.getElementById('detailsName');
+      if (nameInput) {
+        if (!nameInput.value && email && email.includes('@')) {
+          nameInput.value = email.split('@')[0];
+        }
+        nameInput.focus();
+      }
+    }
+
+    function cancelDetailsView() {
+      isCompletingProfile = false;
+      sessionStorage.removeItem('orgqa_completing_profile');
+      switchAuthTab('signin');
+    }
+
+    async function handleDetailsSubmit(e) {
+      if (e) e.preventDefault();
+      const fullName = document.getElementById('detailsName').value.trim();
+      const department = document.getElementById('detailsDept').value;
+      const role = document.getElementById('detailsRole').value;
+      const btn = document.getElementById('detailsSubmitBtn');
+
+      if (!currentToken) {
+        isCompletingProfile = false;
+        sessionStorage.removeItem('orgqa_completing_profile');
+        showAuthNotice('No active session found. Please sign in or create an account.');
+        switchAuthTab('signin');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span>Saving Profile...</span>';
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/profile`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${currentToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ full_name: fullName, department, role })
+        });
+        const data = await res.json();
+
+        if (res.status === 401) {
+          isCompletingProfile = false;
+          sessionStorage.removeItem('orgqa_completing_profile');
+          handleLogout();
+          showAuthNotice('Your session has expired. Please sign in with your email and password.');
+          return;
+        }
+
+        if (!res.ok) {
+          showAuthNotice(data.detail || 'Could not save profile details. Please try again.');
+          btn.disabled = false;
+          btn.innerHTML = '<span>Save Profile & Enter OrgQA</span>';
+          return;
+        }
+
+        const activeName = data.full_name || fullName;
+        const activeDept = data.department || department;
+        const activeRole = data.role || role;
+
+        isCompletingProfile = false;
+        sessionStorage.removeItem('orgqa_completing_profile');
+        setProfileData(activeName, pendingConfirmationEmail || data.email, activeRole, activeDept);
+        document.body.classList.add('is-authenticated');
+        showToast(`Welcome to OrgQA, ${activeName}!`);
+        await loadUserThreads();
+      } catch (err) {
+        showAuthNotice('Network error saving profile. Please check connection.');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>Save Profile & Enter OrgQA</span>';
+      }
+    }
+
+    function checkEmailConfirmationCallback() {
+      const hash = window.location.hash || '';
+      const search = window.location.search || '';
+
+      const rawParams = hash.includes('error') ? hash : search;
+      if (rawParams.includes('error=')) {
+        const cleanParams = rawParams.startsWith('#') || rawParams.startsWith('?') ? rawParams.substring(1) : rawParams;
+        const p = new URLSearchParams(cleanParams);
+        const desc = p.get('error_description') || p.get('error') || 'Email confirmation link is invalid or has expired.';
+        try {
+          window.history.replaceState(null, '', window.location.pathname);
+        } catch (e) {}
+        switchAuthTab('signin');
+        showAuthNotice(desc.replace(/\+/g, ' '));
+        return false;
+      }
+
+      let accessToken = null;
+      if (hash.includes('access_token')) {
+        const cleanHash = hash.startsWith('#') ? hash.substring(1) : hash;
+        const params = new URLSearchParams(cleanHash);
+        accessToken = params.get('access_token');
+      } else if (search.includes('access_token')) {
+        const cleanSearch = search.startsWith('?') ? search.substring(1) : search;
+        const params = new URLSearchParams(cleanSearch);
+        accessToken = params.get('access_token');
+      }
+
+      if (accessToken) {
+        setAuthToken(accessToken, false);
+        try {
+          window.history.replaceState(null, '', window.location.pathname);
+        } catch (e) {}
+        const payload = parseJwt(accessToken);
+        const email = (payload && payload.email) ? payload.email : '';
+        pendingConfirmationEmail = email;
+
+        fetch(`${API_BASE}/auth/me`, {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        }).then(r => r.json()).then(user => {
+          if (user && user.full_name && user.department && user.department !== '') {
+            isCompletingProfile = false;
+            sessionStorage.removeItem('orgqa_completing_profile');
+            setProfileData(user.full_name, user.email, user.role, user.department);
+            document.body.classList.add('is-authenticated');
+            showToast(`Welcome to OrgQA, ${user.full_name}!`);
+            loadUserThreads();
+          } else {
+            showToast('Email verified! Please complete your profile.');
+            showDetailsView(email);
+          }
+        }).catch(() => {
+          showToast('Email verified! Please complete your profile.');
+          showDetailsView(email);
+        });
+        return true;
+      }
+      return false;
     }
 
     async function handleSignInSubmit(e) {
@@ -1650,11 +1935,19 @@
 
     async function handleSignUpSubmit(e) {
       e.preventDefault();
-      const fullName = document.getElementById('signUpName').value.trim();
       const email = document.getElementById('signUpEmail').value.trim();
-      const department = document.getElementById('signUpDept').value;
-      const role = document.getElementById('signUpRole').value;
       const password = document.getElementById('signUpPassword').value;
+      const confirmPassword = document.getElementById('signUpPasswordConfirm').value;
+
+      if (password !== confirmPassword) {
+        showAuthNotice('Passwords do not match. Please verify.');
+        return;
+      }
+      if (password.length < 6) {
+        showAuthNotice('Password must be at least 6 characters long.');
+        return;
+      }
+
       const btn = document.getElementById('signUpSubmitBtn');
       btn.disabled = true;
       btn.innerHTML = '<span>Creating Account...</span>';
@@ -1663,31 +1956,24 @@
         const res = await fetch(`${API_BASE}/auth/signup`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password, full_name: fullName, department, role })
+          body: JSON.stringify({ email, password, redirect_to: window.location.origin })
         });
         const data = await res.json();
         if (res.ok) {
           if (data.access_token) {
             setAuthToken(data.access_token);
-            setProfileData(fullName, email, role, department);
-            document.body.classList.add('is-authenticated');
-            showToast('Account created and signed in!');
+            showDetailsView(email);
           } else {
-            showAuthNotice('Registration successful! Please sign in with your password.', false);
-            setTimeout(() => {
-              switchAuthTab('signin');
-              const emailEl = document.getElementById('signInEmail');
-              if (emailEl) emailEl.value = email;
-            }, 1200);
+            showConfirmationView(email);
           }
         } else {
           showAuthNotice(data.detail || 'Registration failed.');
         }
       } catch (err) {
-        showAuthNotice('Could not connect to registration service.');
+        showAuthNotice('Could not connect to Supabase registration service.');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span>Create Account</span>';
+        btn.innerHTML = '<span>Sign Up with Supabase</span>';
       }
     }
 
@@ -1695,7 +1981,9 @@
       if (event) event.stopPropagation();
       currentToken = '';
       currentThreadId = null;
+      isCompletingProfile = false;
       localStorage.removeItem('company_qa_jwt');
+      sessionStorage.removeItem('orgqa_completing_profile');
       document.body.classList.remove('is-authenticated');
       closeAccountModal();
       setProfileData('', '', '', '');
@@ -1792,11 +2080,13 @@
       }
     }
 
-    function setAuthToken(token) {
+    function setAuthToken(token, reloadProfile = true) {
       currentToken = token;
       localStorage.setItem('company_qa_jwt', token);
-      loadUserProfile();
-      loadUserThreads();
+      if (reloadProfile && !isCompletingProfile && sessionStorage.getItem('orgqa_completing_profile') !== 'true') {
+        loadUserProfile();
+        loadUserThreads();
+      }
     }
 
     function parseJwt(token) {
@@ -1813,6 +2103,10 @@
     }
 
     async function loadUserProfile() {
+      if (isCompletingProfile || sessionStorage.getItem('orgqa_completing_profile') === 'true') {
+        return;
+      }
+
       if (!currentToken) {
         document.body.classList.remove('is-authenticated');
         setProfileData('', '', '', '');
@@ -1825,6 +2119,10 @@
         });
         if (res.ok) {
           const user = await res.json();
+          if (!user.department || user.department === '' || !user.full_name || user.full_name === '') {
+            showDetailsView(user.email);
+            return;
+          }
           document.body.classList.add('is-authenticated');
           setProfileData(user.full_name || user.email.split('@')[0], user.email, user.role, user.department || 'General');
           return;
@@ -2463,11 +2761,57 @@
     });
 
     // Initialization
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
       populateLogos();
       updateThemeIcons(document.documentElement.getAttribute('data-theme'));
-      loadUserProfile();
-      loadUserThreads();
+
+      const isConfirming = checkEmailConfirmationCallback();
+      if (isConfirming) {
+        return;
+      }
+
+      if (currentToken) {
+        try {
+          const res = await fetch(`${API_BASE}/auth/me`, {
+            headers: { 'Authorization': `Bearer ${currentToken}` }
+          });
+          if (res.ok) {
+            const user = await res.json();
+            if (user.full_name && user.department && user.department !== '') {
+              sessionStorage.removeItem('orgqa_completing_profile');
+              isCompletingProfile = false;
+              setProfileData(user.full_name, user.email, user.role, user.department);
+              document.body.classList.add('is-authenticated');
+              await loadUserThreads();
+              return;
+            } else {
+              showDetailsView(user.email);
+              return;
+            }
+          } else if (res.status === 401) {
+            handleLogout();
+            return;
+          }
+        } catch (e) {
+          console.warn('Initial profile load check failed:', e);
+        }
+      }
+
+      if (sessionStorage.getItem('orgqa_completing_profile') === 'true') {
+        if (!currentToken) {
+          sessionStorage.removeItem('orgqa_completing_profile');
+          switchAuthTab('signin');
+          return;
+        }
+        const payload = parseJwt(currentToken);
+        showDetailsView(payload?.email || pendingConfirmationEmail || '');
+        return;
+      }
+
+      await loadUserProfile();
+      if (document.body.classList.contains('is-authenticated')) {
+        await loadUserThreads();
+      }
     });
   </script>
 </body>

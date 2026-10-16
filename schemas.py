@@ -52,24 +52,28 @@ class AuthLoginRequest(BaseModel):
 class AuthSignUpRequest(BaseModel):
     email: str
     password: str
-    full_name: Optional[str] = None
-    department: Optional[str] = None
-    role: Optional[str] = "employee"
+    redirect_to: Optional[str] = None
 
 class AuthResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: Dict[str, Any]
 
-class AuthSignUpRequest(BaseModel):
+class SignUpResponse(BaseModel):
+    access_token: Optional[str] = ""
+    token_type: str = "bearer"
+    user: Optional[Dict[str, Any]] = None
+    requires_confirmation: bool = False
+    email: Optional[str] = None
+    message: Optional[str] = None
+
+class ResendConfirmationRequest(BaseModel):
     email: str
-    password: str
-    full_name: Optional[str] = None
-    department: Optional[str] = None
+    redirect_to: Optional[str] = None
+
+class UpdateProfileRequest(BaseModel):
+    full_name: str
+    department: str
     role: Optional[str] = "employee"
 
-class AuthResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    user: Dict[str, Any]
 

@@ -55,7 +55,21 @@ ALLOWED_EXTENSIONS = {
 APP_START_TIME = time.time()
 
 supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-llm = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite", api_key=GEMINI_API_KEY)
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+_primary_llm = ChatGoogleGenerativeAI(
+    model=GEMINI_MODEL,
+    api_key=GEMINI_API_KEY,
+    max_retries=2,
+)
+if GEMINI_MODEL != "gemini-2.5-flash":
+    _backup_llm = ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+        api_key=GEMINI_API_KEY,
+        max_retries=2,
+    )
+    llm = _primary_llm.with_fallbacks([_backup_llm])
+else:
+    llm = _primary_llm
 embeddings = NVIDIAEmbeddings(
     model="nvidia/nemotron-3-embed-1b",
     api_key=NVIDIA_API_KEY,

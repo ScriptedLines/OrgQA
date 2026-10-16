@@ -343,6 +343,8 @@ async def _execute_chat_pipeline(
         if queue is not None:
             await queue.put({"type": "error", "detail": str(e)})
             await queue.put(None)
+            logger.error(f"Error executing streaming chat pipeline for thread '{thread_id}': {e}")
+            return ChatResponse(answer=f"Error: {e}", thread_id=thread_id, sources=[])
         logger.exception(f"Error executing chat pipeline for thread '{thread_id}': {e}")
         raise
 
