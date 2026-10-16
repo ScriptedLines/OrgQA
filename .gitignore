@@ -1,0 +1,11 @@
+.env
+.venv/
+.agent/
+specs/
+docs/
+__pycache__/
+*/__pycache__/
+benchmark_dataset.json
+test.py
+test.html
+evaluate.py
