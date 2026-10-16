@@ -18,6 +18,7 @@ from schemas import (
     SourceCitation,
     ThreadHistoryResponse,
     ThreadResponse,
+    UpdateThreadRequest,
 )
 from services import _summarize_thread
 
@@ -116,6 +117,53 @@ async def get_thread_history(
         summary=record.get("summary", ""),
         messages=record.get("all_messages", []),
         updated_at=record.get("updated_at") or "",
+    )
+
+@router.delete("/threads/{thread_id}", status_code=status.HTTP_200_OK)
+async def delete_thread(
+    thread_id: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
+    def _delete():
+        return (
+            supabase_client.table("conversations")
+            .delete()
+            .eq("thread_id", thread_id)
+            .eq("user_id", current_user.id)
+            .execute()
+        )
+
+    await asyncio.to_thread(_delete)
+    return {"message": "Thread deleted", "thread_id": thread_id}
+
+@router.patch("/threads/{thread_id}", response_model=ThreadResponse)
+async def update_thread_title(
+    thread_id: str,
+    req: UpdateThreadRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
+    now = datetime.now(timezone.utc).isoformat()
+
+    def _update():
+        return (
+            supabase_client.table("conversations")
+            .update({"summary": req.title, "updated_at": now})
+            .eq("thread_id", thread_id)
+            .eq("user_id", current_user.id)
+            .execute()
+        )
+
+    res = await asyncio.to_thread(_update)
+    if not res.data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Thread '{thread_id}' not found.",
+        )
+    return ThreadResponse(
+        thread_id=thread_id,
+        user_id=current_user.id,
+        created_at=res.data[0].get("created_at") or now,
+        title=req.title,
     )
 
 async def _execute_chat_pipeline(

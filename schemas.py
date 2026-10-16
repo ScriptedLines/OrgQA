@@ -9,6 +9,9 @@ class HealthResponse(BaseModel):
 class CreateThreadRequest(BaseModel):
     user_id: Optional[str] = None
 
+class UpdateThreadRequest(BaseModel):
+    title: str = Field(..., min_length=1, max_length=120)
+
 class ThreadResponse(BaseModel):
     thread_id: str
     user_id: str
@@ -41,4 +44,32 @@ class IngestResponse(BaseModel):
     message: str
     total_chunks: int
     files_processed: List[str]
+
+class AuthLoginRequest(BaseModel):
+    email: str
+    password: str
+
+class AuthSignUpRequest(BaseModel):
+    email: str
+    password: str
+    full_name: Optional[str] = None
+    department: Optional[str] = None
+    role: Optional[str] = "employee"
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: Dict[str, Any]
+
+class AuthSignUpRequest(BaseModel):
+    email: str
+    password: str
+    full_name: Optional[str] = None
+    department: Optional[str] = None
+    role: Optional[str] = "employee"
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: Dict[str, Any]
 

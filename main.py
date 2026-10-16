@@ -5,7 +5,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from config import APP_START_TIME, lifespan, logger, supabase_client
-from routers import chat, ingest
+from routers import auth, chat, ingest
 from schemas import HealthResponse
 
 app = FastAPI(
@@ -31,6 +31,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"detail": "An internal server error occurred. Please try again later."},
     )
 
+app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(ingest.router)
 
