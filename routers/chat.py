@@ -316,7 +316,10 @@ async def _execute_chat_pipeline(
                 },
             )
 
-        new_msgs = [HumanMessage(content=query), AIMessage(content=full_ans)]
+        new_msgs = [
+            HumanMessage(content=query),
+            AIMessage(content=full_ans, additional_kwargs={"sources": [c.dict() for c in citations]}),
+        ]
         last_n_msg.extend(new_msgs)
         all_msg.extend(new_msgs)
 

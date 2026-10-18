@@ -14,6 +14,22 @@ Unlike generic conversational bots, OrgQA implements a **strict dual-stage retri
 
 ---
 
+## Screenshots
+
+**Sign In** — email/password authentication with one-click Employee & HR Admin demo profiles.
+
+![Sign In](assets/1.png)
+
+**New Query Workspace** — role-aware console with recent threads, suggested policy topics, and the grounded input dock.
+
+![New Query Workspace](assets/2.png)
+
+**Grounded Citations** — VERIFIED answers with inline citation chips and exact source sections.
+
+![Grounded Citations](assets/3.png)
+
+---
+
 ## Table of Contents
 
 - [1. Executive Architecture Overview](#1-executive-architecture-overview)
@@ -508,6 +524,7 @@ company-qa/
 ├── schemas.py                # Pydantic v2 validation models and API contracts
 ├── services.py               # Document ingestion, loaders, splitters, and memory compression
 ├── index.html                # Monochromatic executive Single-Page Application (Frontend)
+├── assets/                   # README screenshots (sign-in, workspace, grounded citations)
 ├── benchmark_dataset.json    # Golden Q&A evaluation dataset
 ├── evaluate_ragas.py         # Advanced RAGAS-compatible benchmark suite
 ├── pyproject.toml            # Project dependencies and tool configurations

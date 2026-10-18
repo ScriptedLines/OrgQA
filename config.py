@@ -55,13 +55,14 @@ ALLOWED_EXTENSIONS = {
 APP_START_TIME = time.time()
 
 supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+auth_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite")
 _primary_llm = ChatGoogleGenerativeAI(
     model=GEMINI_MODEL,
     api_key=GEMINI_API_KEY,
     max_retries=2,
 )
-if GEMINI_MODEL != "gemini-2.5-flash":
+if GEMINI_MODEL != "gemini-2.5-flash-lite":
     _backup_llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash",
         api_key=GEMINI_API_KEY,

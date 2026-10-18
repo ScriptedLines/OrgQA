@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
-from config import logger, supabase_client
+from config import auth_client, logger, supabase_client
 from dependencies import AuthenticatedUser, get_current_user
 from schemas import (
     AuthLoginRequest,
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/login", response_model=AuthResponse)
 async def login(req: AuthLoginRequest):
     def _login():
-        return supabase_client.auth.sign_in_with_password({
+        return auth_client.auth.sign_in_with_password({
             "email": req.email,
             "password": req.password,
         })
@@ -77,7 +77,7 @@ async def signup(req: AuthSignUpRequest):
         }
         if req.redirect_to:
             credentials["options"] = {"email_redirect_to": req.redirect_to}
-        return supabase_client.auth.sign_up(credentials)
+        return auth_client.auth.sign_up(credentials)
 
     try:
         res = await asyncio.to_thread(_signup)
@@ -156,7 +156,7 @@ async def resend_confirmation(req: ResendConfirmationRequest):
         }
         if req.redirect_to:
             credentials["options"] = {"email_redirect_to": req.redirect_to}
-        return supabase_client.auth.resend(credentials)
+        return auth_client.auth.resend(credentials)
 
     try:
         await asyncio.to_thread(_resend)

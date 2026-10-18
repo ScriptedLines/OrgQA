@@ -548,13 +548,18 @@
     .chat-container {
       flex: 1;
       overflow-y: auto;
-      padding: 24px 20px 110px;
+      padding: 24px 20px 24px;
       display: flex;
       flex-direction: column;
+      align-items: center;
       gap: 22px;
-      max-width: 800px;
       width: 100%;
-      margin: 0 auto;
+    }
+
+    .chat-container > * {
+      width: 100%;
+      max-width: 800px;
+      flex-shrink: 0;
     }
 
     .welcome-card {
@@ -1006,10 +1011,8 @@
 
     /* Input Dock */
     .input-dock {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      position: relative;
+      flex-shrink: 0;
       padding: 12px 18px 16px;
       background: linear-gradient(180deg, rgba(0,0,0,0) 0%, var(--bg-app) 40%);
       display: flex;
@@ -1192,6 +1195,14 @@
       gap: 9px;
       animation: toastEnter 0.18s cubic-bezier(0.16, 1, 0.3, 1);
       transition: opacity 0.16s ease, transform 0.16s ease;
+    }
+
+    .toast.error {
+      border-color: rgba(239, 68, 68, 0.45);
+    }
+
+    .toast.error svg {
+      color: #ef4444;
     }
 
     @keyframes toastEnter {
@@ -1552,6 +1563,27 @@
     let isStreaming = false;
     let selectedUploadFiles = [];
 
+    const WELCOME_CARD_HTML = `
+      <div class="welcome-card" id="welcomeCardEl">
+        <h2 class="welcome-title">Enterprise Governance & Compliance Intelligence</h2>
+        <p class="welcome-desc">Direct semantic synthesis grounded in verified internal documents, anchor day policies, remote stipends, and hardware refresh guides.</p>
+        <div class="prompt-suggestions">
+          <div class="suggestion-box" onclick="sendSuggestedPrompt('What are the core collaboration hours and anchor day rules?')">
+            <strong>Collaboration Schedule</strong><br/>Core hours and mandatory in-office anchor days.
+          </div>
+          <div class="suggestion-box" onclick="sendSuggestedPrompt('How much is the ergonomic home office grant and internet reimbursement?')">
+            <strong>Remote Allowances</strong><br/>One-time setup grants and monthly broadband stipends.
+          </div>
+          <div class="suggestion-box" onclick="sendSuggestedPrompt('Can I work remotely from another country and what is the process?')">
+            <strong>Global Mobility</strong><br/>International remote work rules, duration, and notice windows.
+          </div>
+          <div class="suggestion-box" onclick="sendSuggestedPrompt('What laptop hardware tier am I eligible for in my role?')">
+            <strong>Hardware Eligibility</strong><br/>Standard laptop specifications, refresh cycles, and monitors.
+          </div>
+        </div>
+      </div>
+    `;
+
     function populateLogos() {
       if (typeof APP_LOGO !== 'undefined' && APP_LOGO) {
         document.querySelectorAll('.app-logo-img').forEach(img => {
@@ -1591,11 +1623,12 @@
     function showToast(message, type = 'info') {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
-      toast.className = 'toast';
+      toast.className = type === 'error' ? 'toast error' : 'toast';
       toast.innerHTML = `
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-        <span>${message}</span>
+        <span></span>
       `;
+      toast.querySelector('span').textContent = message;
       container.appendChild(toast);
       setTimeout(() => {
         toast.style.opacity = '0';
@@ -1620,6 +1653,15 @@
     function closeIngestModal() {
       document.getElementById('ingestModal').classList.remove('open');
     }
+
+    ['accountModal', 'ingestModal'].forEach(id => {
+      const modal = document.getElementById(id);
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) modal.classList.remove('open');
+        });
+      }
+    });
 
     // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
@@ -1988,26 +2030,7 @@
       closeAccountModal();
       setProfileData('', '', '', '');
       document.getElementById('activeThreadTitle').innerText = 'Select or create a conversation';
-      document.getElementById('chatFeedEl').innerHTML = `
-        <div class="welcome-card" id="welcomeCardEl">
-          <h2 class="welcome-title">Enterprise Governance & Compliance Intelligence</h2>
-          <p class="welcome-desc">Direct semantic synthesis grounded in verified internal documents, anchor day policies, remote stipends, and hardware refresh guides.</p>
-          <div class="prompt-suggestions">
-            <div class="suggestion-box" onclick="sendSuggestedPrompt('What are the core collaboration hours and anchor day rules?')">
-              <strong>Collaboration Schedule</strong><br/>Core hours and mandatory in-office anchor days.
-            </div>
-            <div class="suggestion-box" onclick="sendSuggestedPrompt('How much is the ergonomic home office grant and internet reimbursement?')">
-              <strong>Remote Allowances</strong><br/>One-time setup grants and monthly broadband stipends.
-            </div>
-            <div class="suggestion-box" onclick="sendSuggestedPrompt('Can I work remotely from another country and what is the process?')">
-              <strong>Global Mobility</strong><br/>International remote work rules, duration, and notice windows.
-            </div>
-            <div class="suggestion-box" onclick="sendSuggestedPrompt('What laptop hardware tier am I eligible for in my role?')">
-              <strong>Hardware Eligibility</strong><br/>Standard laptop specifications, refresh cycles, and monitors.
-            </div>
-          </div>
-        </div>
-      `;
+      document.getElementById('chatFeedEl').innerHTML = WELCOME_CARD_HTML;
       loadUserThreads();
       switchAuthTab('signin');
       showToast('Signed out successfully.');
@@ -2150,10 +2173,6 @@
       if (!str) return '';
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
-    function escapeAttr(str) {
-      if (!str) return '';
-      return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
 
     // Live Threads API
     async function loadUserThreads() {
@@ -2179,6 +2198,8 @@
           if (threads.length > 0 && !currentThreadId) {
             selectThread(threads[0].thread_id);
           }
+        } else if (res.status === 401) {
+          handleLogout();
         } else {
           container.innerHTML = '<div style="font-size: 11.5px; color: var(--text-muted); padding: 8px;">No active conversations. Start a new one.</div>';
         }
@@ -2214,14 +2235,16 @@
           </div>
           <span class="thread-date tabular">${dateStr}</span>
           <div class="thread-actions">
-            <button class="thread-action-btn" title="Rename query" onclick="startRenameThread(event, '${t.thread_id}', '${escapeAttr(title)}')">
+            <button class="thread-action-btn rename" title="Rename query" aria-label="Rename query">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
             </button>
-            <button class="thread-action-btn delete" title="Delete conversation" onclick="deleteThread(event, '${t.thread_id}')">
+            <button class="thread-action-btn delete" title="Delete conversation" aria-label="Delete conversation">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
             </button>
           </div>
         `;
+        div.querySelector('.thread-action-btn.rename').addEventListener('click', (e) => startRenameThread(e, t.thread_id, title));
+        div.querySelector('.thread-action-btn.delete').addEventListener('click', (e) => deleteThread(e, t.thread_id));
         container.appendChild(div);
       });
     }
@@ -2241,26 +2264,7 @@
             currentThreadId = null;
             document.getElementById('activeThreadTitle').innerText = 'Select or create a conversation';
             const feed = document.getElementById('chatFeedEl');
-            feed.innerHTML = `
-              <div class="welcome-card" id="welcomeCardEl">
-                <h2 class="welcome-title">Enterprise Governance & Compliance Intelligence</h2>
-                <p class="welcome-desc">Direct semantic synthesis grounded in verified internal documents, anchor day policies, remote stipends, and hardware refresh guides.</p>
-                <div class="prompt-suggestions">
-                  <div class="suggestion-box" onclick="sendSuggestedPrompt('What are the core collaboration hours and anchor day rules?')">
-                    <strong>Collaboration Schedule</strong><br/>Core hours and mandatory in-office anchor days.
-                  </div>
-                  <div class="suggestion-box" onclick="sendSuggestedPrompt('How much is the ergonomic home office grant and internet reimbursement?')">
-                    <strong>Remote Allowances</strong><br/>One-time setup grants and monthly broadband stipends.
-                  </div>
-                  <div class="suggestion-box" onclick="sendSuggestedPrompt('Can I work remotely from another country and what is the process?')">
-                    <strong>Global Mobility</strong><br/>International remote work rules, duration, and notice windows.
-                  </div>
-                  <div class="suggestion-box" onclick="sendSuggestedPrompt('What laptop hardware tier am I eligible for in my role?')">
-                    <strong>Hardware Eligibility</strong><br/>Standard laptop specifications, refresh cycles, and monitors.
-                  </div>
-                </div>
-              </div>
-            `;
+            feed.innerHTML = WELCOME_CARD_HTML;
           }
           await loadUserThreads();
         } else {
@@ -2397,6 +2401,12 @@
       }
     }
 
+    function scrollFeedToBottom() {
+      const feed = document.getElementById('chatFeedEl');
+      if (!feed) return;
+      feed.scrollTop = feed.scrollHeight;
+    }
+
     function renderMessages(messages) {
       const feed = document.getElementById('chatFeedEl');
       feed.innerHTML = '';
@@ -2407,33 +2417,26 @@
 
       messages.forEach(msg => {
         const isUser = msg.type === 'human' || (msg.data && msg.data.type === 'human');
-        const content = msg.data ? msg.data.content : msg.content;
+        const data = msg.data || msg;
+        const content = data.content;
+        const sources = data.additional_kwargs && data.additional_kwargs.sources;
         const { bubble } = appendMessageBubble(isUser ? 'user' : 'assistant', content, false);
-        if (!isUser && msg.sources) {
-          renderSourcesCard(bubble, msg.sources);
+        if (!isUser && sources && sources.length) {
+          renderSourcesCard(bubble, sources);
         }
       });
 
-      feed.scrollTop = feed.scrollHeight;
+      scrollFeedToBottom();
+      requestAnimationFrame(scrollFeedToBottom);
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(scrollFeedToBottom);
+      }
     }
 
     function createWelcomeCard() {
-      const card = document.createElement('div');
-      card.className = 'welcome-card';
-      card.id = 'welcomeCardEl';
-      card.innerHTML = `
-        <h2 class="welcome-title">Enterprise Governance & Compliance Intelligence</h2>
-        <p class="welcome-desc">Direct semantic synthesis grounded in verified internal documents, anchor day policies, remote stipends, and hardware refresh guides.</p>
-        <div class="prompt-suggestions">
-          <div class="suggestion-box" onclick="sendSuggestedPrompt('What are the core collaboration hours and anchor day rules?')">
-            <strong>Collaboration Schedule</strong><br/>Core hours and mandatory in-office anchor days.
-          </div>
-          <div class="suggestion-box" onclick="sendSuggestedPrompt('How much is the ergonomic home office grant and internet reimbursement?')">
-            <strong>Remote Allowances</strong><br/>One-time setup grants and monthly broadband stipends.
-          </div>
-        </div>
-      `;
-      return card;
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = WELCOME_CARD_HTML.trim();
+      return wrapper.firstElementChild;
     }
 
     function appendMessageBubble(sender, initialContent = '', isLiveStreaming = false) {
@@ -2475,42 +2478,95 @@
       if (sender === 'assistant' && !isLiveStreaming && initialContent) {
         const actions = document.createElement('div');
         actions.className = 'message-actions';
-        actions.innerHTML = `
-          <button class="copy-btn" onclick="copyResponseText(this, decodeURIComponent('${encodeURIComponent(initialContent)}'))" aria-label="Copy response">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-            <span>Copy</span>
-          </button>
-        `;
+        actions.appendChild(createCopyButton(initialContent));
         row.appendChild(actions);
       }
 
       feed.appendChild(row);
-      feed.scrollTop = feed.scrollHeight;
+      scrollFeedToBottom();
 
       return { row, bubble };
     }
 
     function formatMarkdown(text) {
       if (!text) return '';
-      let escaped = text
+      const escaped = text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
-      escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
-      escaped = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
-      
-      escaped = escaped.replace(/\[(\d+)\]/g, (match, num) => {
-        return `<button type="button" class="inline-citation" onclick="handleCitationClick(event, this, ${num})" title="Jump to Source [${num}]">[${num}]</button>`;
-      });
+      const inline = (s) => s
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\[(\d+)\]/g, (match, num) => `<button type="button" class="inline-citation" onclick="handleCitationClick(event, this, ${num})" title="Jump to Source [${num}]">[${num}]</button>`);
 
-      escaped = escaped.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>');
-      return `<p>${escaped}</p>`;
+      const parts = [];
+      let listTag = null;
+      let listItems = [];
+      const closeList = () => {
+        if (listTag) {
+          parts.push(`<${listTag}>${listItems.join('')}</${listTag}>`);
+          listTag = null;
+          listItems = [];
+        }
+      };
+
+      escaped.split('\n').forEach(rawLine => {
+        const line = rawLine.trim();
+        let m;
+        if ((m = line.match(/^(?:\*|\-|•)\s+(.+)$/))) {
+          if (listTag !== 'ul') { closeList(); listTag = 'ul'; }
+          listItems.push(`<li>${inline(m[1])}</li>`);
+        } else if ((m = line.match(/^\d+[.)]\s+(.+)$/))) {
+          if (listTag !== 'ol') { closeList(); listTag = 'ol'; }
+          listItems.push(`<li>${inline(m[1])}</li>`);
+        } else if (line === '') {
+          closeList();
+          parts.push('');
+        } else {
+          closeList();
+          parts.push(inline(line));
+        }
+      });
+      closeList();
+
+      const html = [];
+      let para = [];
+      const flushPara = () => {
+        if (para.length) {
+          html.push(`<p>${para.join('<br/>')}</p>`);
+          para = [];
+        }
+      };
+      parts.forEach(part => {
+        if (part === '') {
+          flushPara();
+        } else if (part.startsWith('<ul>') || part.startsWith('<ol>')) {
+          flushPara();
+          html.push(part);
+        } else {
+          para.push(part);
+        }
+      });
+      flushPara();
+      return html.join('');
+    }
+
+    function createCopyButton(text) {
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.setAttribute('aria-label', 'Copy response');
+      btn.innerHTML = `
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        <span>Copy</span>
+      `;
+      btn.addEventListener('click', () => copyResponseText(btn, text));
+      return btn;
     }
 
     function copyResponseText(btn, text) {
-      navigator.clipboard.writeText(text).then(() => {
+      const showCopied = () => {
         const originalHtml = btn.innerHTML;
         btn.innerHTML = `
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -2519,7 +2575,32 @@
         setTimeout(() => {
           btn.innerHTML = originalHtml;
         }, 1500);
-      });
+      };
+
+      const fallbackCopy = () => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        let ok = false;
+        try {
+          ok = document.execCommand('copy');
+        } catch (err) {
+          ok = false;
+        }
+        ta.remove();
+        if (ok) showCopied();
+        else showToast('Could not copy to clipboard.', 'error');
+      };
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(showCopied).catch(fallbackCopy);
+      } else {
+        fallbackCopy();
+      }
     }
 
     // Real-Time SSE Streaming
@@ -2533,16 +2614,22 @@
         return;
       }
 
+      isStreaming = true;
+      document.getElementById('sendBtnEl').disabled = true;
+
       if (!currentThreadId) {
         await createNewThread();
+        if (!currentThreadId) {
+          isStreaming = false;
+          document.getElementById('sendBtnEl').disabled = false;
+          showToast('Could not start a new conversation. Please try again.', 'error');
+          return;
+        }
       }
 
       inputEl.value = '';
       inputEl.style.height = '40px';
       appendMessageBubble('user', query, false);
-
-      isStreaming = true;
-      document.getElementById('sendBtnEl').disabled = true;
 
       const { row, bubble } = appendMessageBubble('assistant', '', true);
       let accumulatedText = '';
@@ -2578,9 +2665,10 @@
               if (event.type === 'token') {
                 accumulatedText += event.content;
                 bubble.innerHTML = formatMarkdown(accumulatedText) + '<span class="blinking-cursor"></span>';
-                document.getElementById('chatFeedEl').scrollTop = document.getElementById('chatFeedEl').scrollHeight;
+                scrollFeedToBottom();
               } else if (event.type === 'sources') {
                 renderSourcesCard(bubble, event.sources || []);
+                scrollFeedToBottom();
               } else if (event.type === 'done') {
                 finalizeAssistantMessage(row, bubble, accumulatedText);
               }
@@ -2596,6 +2684,8 @@
         isStreaming = false;
         document.getElementById('sendBtnEl').disabled = false;
         loadUserThreads(); // Refresh thread list to show new dynamic question title
+        scrollFeedToBottom();
+        requestAnimationFrame(scrollFeedToBottom);
       }
     }
 
@@ -2605,13 +2695,10 @@
 
       const actions = document.createElement('div');
       actions.className = 'message-actions';
-      actions.innerHTML = `
-        <button class="copy-btn" onclick="copyResponseText(this, decodeURIComponent('${encodeURIComponent(fullText)}'))" aria-label="Copy response">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          <span>Copy</span>
-        </button>
-      `;
+      actions.appendChild(createCopyButton(fullText));
       row.appendChild(actions);
+      scrollFeedToBottom();
+      requestAnimationFrame(scrollFeedToBottom);
     }
 
     // Monochromatic Citations Accordion & Inline Jumping
@@ -2653,7 +2740,7 @@
         <div class="sources-content-grid">
           <div class="sources-inner">
             ${sources.map((s, idx) => `
-              <div class="source-card" data-citation-index="${idx + 1}" id="sourceCard_${idx + 1}">
+              <div class="source-card" data-citation-index="${idx + 1}">
                 <div class="source-name">
                   <span class="citation-index-badge">[${idx + 1}]</span>
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>
